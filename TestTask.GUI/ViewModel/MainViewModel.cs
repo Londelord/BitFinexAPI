@@ -159,7 +159,6 @@ public class MainViewModel : INotifyPropertyChanged
 
     private void AddTradeToCollection(Trade trade)
     {
-        Console.WriteLine(trade.Id);
         Application.Current.Dispatcher.Invoke(() =>
         {
             if (SocketTrades.Any(t => t.Id == trade.Id))
@@ -169,6 +168,35 @@ public class MainViewModel : INotifyPropertyChanged
 
             if (SocketTrades.Count > TradesAmount)
                 SocketTrades.RemoveAt(0);
+        });
+    }
+
+    public async Task LoadSocketCandlesAsync()
+    {
+        await Task.Run(async () =>
+        {
+            await _connector.ConnectAsync();
+
+            _connector.CandleSeriesProcessing += AddCandleToCollection;
+
+            _connector.SubscribeCandles(Pair, TimeFrame.GetTimeFrameInInt(SelectedTimeFrame));
+        });
+    }
+    
+    private void AddCandleToCollection(Candle candle)
+    {
+        Application.Current.Dispatcher.Invoke(() =>
+        {
+            SocketCandles.Add(candle);
+
+            if (SocketCandles.Any(c => c.OpenTime.Equals(candle.OpenTime)))
+            {
+                SocketCandles.Remove(SocketCandles.FirstOrDefault(c => c.OpenTime.Equals(candle.OpenTime)));
+                SocketCandles.Add(candle);
+            }
+
+            if (SocketCandles.Count > CandlesAmount)
+                SocketCandles.RemoveAt(0);
         });
     }
 }

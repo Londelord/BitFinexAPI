@@ -1,6 +1,5 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
 using TestTask.GUI.ViewModel;
 
 namespace TestTask.GUI;
@@ -48,5 +47,11 @@ public partial class MainWindow : Window
     {
         var viewModel = (MainViewModel)DataContext;
         Task.Run(async () => await viewModel.LoadSocketTradesAsync());
+    }
+
+    private void GetSocketCandlesButton_OnClick(object sender, RoutedEventArgs e)
+    {
+        var viewModel = (MainViewModel)DataContext;
+        Task.Run(async () => await viewModel.LoadSocketCandlesAsync());
     }
 }

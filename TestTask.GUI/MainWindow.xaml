@@ -128,6 +128,32 @@
                     </StackPanel>
                 </DockPanel>
             </TabItem>
+            <TabItem Header="Candles WS">
+                <DockPanel>
+                    <DataGrid x:Name="CandlesWSDataGrid" 
+                              ItemsSource="{Binding SocketCandles}"
+                              IsReadOnly="True"
+                              Width="auto"
+                              DockPanel.Dock="Left">
+                    </DataGrid>
+                    <StackPanel DockPanel.Dock="Right"
+                                Margin="40">
+                        <Label>Введите валютную пару</Label>
+                        <TextBox 
+                            Text="{Binding Pair, UpdateSourceTrigger=PropertyChanged}" 
+                            Width="auto" />
+                        <Label>Выберите длительность свечи</Label>
+                        <ComboBox
+                            ItemsSource="{Binding TimeFrames}"
+                            SelectedItem="{Binding SelectedTimeFrame, UpdateSourceTrigger=PropertyChanged}"/>
+                        <Label>Введите максимальное количество сделок:</Label>
+                        <TextBox 
+                            Text="{Binding CandlesAmount, UpdateSourceTrigger=PropertyChanged}" 
+                            Width="auto" />
+                        <Button Click="GetSocketCandlesButton_OnClick" Width="auto" Margin="0 16 0 0 ">Подключиться</Button>
+                    </StackPanel>
+                </DockPanel>
+            </TabItem>
         </TabControl>
     </Grid>
 </Window>
