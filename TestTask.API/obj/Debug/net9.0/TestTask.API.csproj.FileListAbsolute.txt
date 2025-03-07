@@ -1,0 +1,11 @@
+C:\Users\londelord\RiderProjects\TestTask\TestTask.API\bin\Debug\net9.0\TestTask.API.deps.json
+C:\Users\londelord\RiderProjects\TestTask\TestTask.API\bin\Debug\net9.0\TestTask.API.dll
+C:\Users\londelord\RiderProjects\TestTask\TestTask.API\bin\Debug\net9.0\TestTask.API.pdb
+C:\Users\londelord\RiderProjects\TestTask\TestTask.API\obj\Debug\net9.0\TestTask.API.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\londelord\RiderProjects\TestTask\TestTask.API\obj\Debug\net9.0\TestTask.API.AssemblyInfoInputs.cache
+C:\Users\londelord\RiderProjects\TestTask\TestTask.API\obj\Debug\net9.0\TestTask.API.AssemblyInfo.cs
+C:\Users\londelord\RiderProjects\TestTask\TestTask.API\obj\Debug\net9.0\TestTask.API.csproj.CoreCompileInputs.cache
+C:\Users\londelord\RiderProjects\TestTask\TestTask.API\obj\Debug\net9.0\TestTask.API.dll
+C:\Users\londelord\RiderProjects\TestTask\TestTask.API\obj\Debug\net9.0\refint\TestTask.API.dll
+C:\Users\londelord\RiderProjects\TestTask\TestTask.API\obj\Debug\net9.0\TestTask.API.pdb
+C:\Users\londelord\RiderProjects\TestTask\TestTask.API\obj\Debug\net9.0\ref\TestTask.API.dll
