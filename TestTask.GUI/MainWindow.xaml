@@ -4,9 +4,130 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TestTask.GUI"
+        xmlns:viewModel="clr-namespace:TestTask.GUI.ViewModel"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="MainWindow" Height="600" Width="1000">
+    <Window.Resources>
+        <Style TargetType="Label">
+            <Setter Property="FontSize" Value="20" />
+        </Style>
+        <Style TargetType="DataGrid">
+            <Setter Property="FontSize" Value="16" />
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="FontSize" Value="20" />
+        </Style>
+        <Style TargetType="ComboBox">
+            <Setter Property="FontSize" Value="18" />
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="FontSize" Value="20" />
+        </Style>
+        <Style TargetType="RadioButton">
+            <Setter Property="FontSize" Value="20" />
+        </Style>
+        <Style TargetType="TabControl">
+            <Setter Property="FontSize" Value="18" />
+        </Style>
+    </Window.Resources>
+    <Window.DataContext>
+        <viewModel:MainViewModel />
+    </Window.DataContext>
     <Grid>
-
+        <TabControl
+            x:Name="MainControl">
+            <TabItem Header="Trades Rest">
+                <DockPanel>
+                    <DataGrid x:Name="TradesDataGrid" 
+                              ItemsSource="{Binding Trades}"
+                              IsReadOnly="True"
+                              Width="auto"
+                              DockPanel.Dock="Left">
+                    </DataGrid>
+                    <StackPanel DockPanel.Dock="Right"
+                                Margin="40">
+                        <Label>Введите валютную пару</Label>
+                        <TextBox 
+                            Text="{Binding Pair, UpdateSourceTrigger=PropertyChanged}" 
+                            Width="auto" />
+                        <Label>Введите количество сделок:</Label>
+                        <TextBox 
+                            Text="{Binding TradesAmount, UpdateSourceTrigger=PropertyChanged}" 
+                            Width="auto" />
+                        <Button Click="GetTradesButton_OnClick" Width="auto" Margin="0 16 0 0 ">Получить данные</Button>
+                    </StackPanel>
+                </DockPanel>
+            </TabItem>
+            <TabItem Header="Candles Rest">
+                <DockPanel>
+                    <DataGrid x:Name="CandlesDataGrid" 
+                              ItemsSource="{Binding Candles}"
+                              IsReadOnly="True"
+                              Width="auto"
+                              DockPanel.Dock="Left">
+                    </DataGrid>
+                    <StackPanel DockPanel.Dock="Right"
+                                Margin="40">
+                        <Label>Введите валютную пару</Label>
+                        <TextBox 
+                            Text="{Binding Pair, UpdateSourceTrigger=PropertyChanged}" 
+                            Width="auto" />
+                        <Label>Выберите длительность свечи</Label>
+                        <ComboBox
+                            ItemsSource="{Binding TimeFrames}"
+                            SelectedItem="{Binding SelectedTimeFrame, UpdateSourceTrigger=PropertyChanged}"/>
+                        <StackPanel>
+                            <Label>Выберите параметр для получения свечей</Label>
+                            <RadioButton 
+                                GroupName="CandleOption" 
+                                Content="Использовать количество"
+                                IsChecked="True"
+                                x:Name="UseAmount"
+                                Checked="ToggleButton_OnChecked"/>
+                            <RadioButton
+                                GroupName="CandleOption"
+                                Content="Использовать время"
+                                IsChecked="False"
+                                x:Name="UseTime"
+                                Checked="ToggleButton_OnChecked"/>
+                        </StackPanel>
+                        <StackPanel Visibility="{Binding CandlesAmountTextBoxVisibility}">
+                            <Label>Введите количество свечей:</Label>
+                            <TextBox 
+                                Text="{Binding CandlesAmount, UpdateSourceTrigger=PropertyChanged}" 
+                                Width="auto" />
+                        </StackPanel>
+                        <StackPanel Visibility="{Binding TimeTextBoxesVisibility}">
+                            <Label>Введите временной промежуток для отображения свечей</Label>
+                            <TextBox Text="{Binding SelectedTimeFrom}"></TextBox>
+                            <TextBox Text="{Binding SelectedTimeTo}"></TextBox>
+                        </StackPanel>
+                        <Button Click="GetCandlesButton_OnClick" Width="auto" Margin="0 16 0 0 ">Получить данные</Button>
+                    </StackPanel>
+                </DockPanel>
+            </TabItem>
+            <TabItem Header="Trades WS">
+                <DockPanel>
+                    <DataGrid x:Name="TradesWSDataGrid" 
+                              ItemsSource="{Binding SocketTrades}"
+                              IsReadOnly="True"
+                              Width="auto"
+                              DockPanel.Dock="Left">
+                    </DataGrid>
+                    <StackPanel DockPanel.Dock="Right"
+                                Margin="40">
+                        <Label>Введите валютную пару</Label>
+                        <TextBox 
+                            Text="{Binding Pair, UpdateSourceTrigger=PropertyChanged}" 
+                            Width="auto" />
+                        <Label>Введите максимальное количество сделок:</Label>
+                        <TextBox 
+                            Text="{Binding TradesAmount, UpdateSourceTrigger=PropertyChanged}" 
+                            Width="auto" />
+                        <Button Click="GetSocketTradesButton_OnClick" Width="auto" Margin="0 16 0 0 ">Подключиться</Button>
+                    </StackPanel>
+                </DockPanel>
+            </TabItem>
+        </TabControl>
     </Grid>
 </Window>

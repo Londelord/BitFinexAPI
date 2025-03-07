@@ -22,3 +22,5 @@ C:\Users\londelord\RiderProjects\TestTask\TestTask.GUI\bin\Debug\net9.0-windows\
 C:\Users\londelord\RiderProjects\TestTask\TestTask.GUI\bin\Debug\net9.0-windows\TestTask.API.pdb
 C:\Users\londelord\RiderProjects\TestTask\TestTask.GUI\obj\Debug\net9.0-windows\TestTask.GUI.csproj.AssemblyReference.cache
 C:\Users\londelord\RiderProjects\TestTask\TestTask.GUI\obj\Debug\net9.0-windows\TestTask.1D29A8D8.Up2Date
+C:\Users\londelord\RiderProjects\TestTask\TestTask.GUI\obj\Debug\net9.0-windows\TestTask.GUI.sourcelink.json
+C:\Users\londelord\RiderProjects\TestTask\TestTask.GUI\obj\Debug\net9.0-windows\GeneratedInternalTypeHelper.g.cs

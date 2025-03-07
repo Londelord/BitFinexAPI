@@ -54,17 +54,29 @@ public class Connector : ITestConnector
 
     public async Task<IEnumerable<Candle>> GetCandleSeriesAsync(string pair, int periodInSec, DateTimeOffset? from, DateTimeOffset? to = null, long? count = 0)
     {
-        if (from is null)
-            throw new ArgumentException("start time must be specified");
-        
-        if (to is null && count is null)
-            throw new ArgumentException("end time or count must be specified");
+        if (from is null && to is null && count is null)
+            throw new ArgumentException("Count or from and to must be set");
+
+        string periodInString = TimeFrame.GetTimeFrameInString(periodInSec);
         
         long start = from.Value.ToUnixTimeMilliseconds();
         long end = to!.Value.ToUnixTimeMilliseconds();
 
-        var candlesApi = await _httpClient.GetFromJsonAsync<object[][]>
-            ($"candles/trade:1m:t{pair.ToUpper()}/hist?start={start}&end={end}");
+        object[][]? candlesApi;
+        
+        if (count is not null)
+        {
+            candlesApi = await _httpClient.GetFromJsonAsync<object[][]>
+                ($"candles/trade:{periodInString}:t{pair.ToUpper()}/hist?limit={count}");
+        }
+        else
+        {
+            if (from is null && to is null)
+                throw new ArgumentException("From and To must be set");
+            
+            candlesApi = await _httpClient.GetFromJsonAsync<object[][]>
+                ($"candles/trade:{periodInString}:t{pair.ToUpper()}/hist?start={start}&end={end}");
+        }
         
         var candles = new List<Candle>();
         
@@ -156,8 +168,6 @@ public class Connector : ITestConnector
         {
             _tradeHandlers.Add(pair, HandleTrade);   
         }
-        
-        
     }
 
     public void UnsubscribeTrades(string pair)

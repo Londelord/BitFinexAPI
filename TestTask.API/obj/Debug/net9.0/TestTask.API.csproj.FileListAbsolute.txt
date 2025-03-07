@@ -9,3 +9,4 @@ C:\Users\londelord\RiderProjects\TestTask\TestTask.API\obj\Debug\net9.0\TestTask
 C:\Users\londelord\RiderProjects\TestTask\TestTask.API\obj\Debug\net9.0\refint\TestTask.API.dll
 C:\Users\londelord\RiderProjects\TestTask\TestTask.API\obj\Debug\net9.0\TestTask.API.pdb
 C:\Users\londelord\RiderProjects\TestTask\TestTask.API\obj\Debug\net9.0\ref\TestTask.API.dll
+C:\Users\londelord\RiderProjects\TestTask\TestTask.API\obj\Debug\net9.0\TestTask.API.sourcelink.json
