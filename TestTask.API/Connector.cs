@@ -50,6 +50,29 @@ public class Connector : ITestConnector
         return trades;
     }
 
+    public async Task<float[]> GetLastPricesOfPairsAsync(string[] pairs)
+    {
+        var queryParameter = "symbols=";
+
+        for (int i = 0; i < pairs.Length; i++)
+        {
+            queryParameter += "t" + pairs[i].ToUpper() + ",";
+        }
+        
+        var response = await _httpClient.GetFromJsonAsync<object[][]>($"tickers?{queryParameter}");
+        
+        if (response == null) return [];
+        
+        var lastPrices = new float[pairs.Length];
+
+        for (int i = 0; i < response.Length; i++)
+        {
+            lastPrices[i] = float.Parse(response[i][7].ToString());
+        }
+        
+        return lastPrices;
+    }
+
     public async Task<IEnumerable<Candle>> GetCandleSeriesAsync(string pair, int periodInSec, DateTimeOffset? from, DateTimeOffset? to = null, long? count = 0)
     {
         if (from is null && to is null && count is null)

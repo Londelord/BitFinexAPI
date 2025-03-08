@@ -46,11 +46,11 @@
                     </DataGrid>
                     <StackPanel DockPanel.Dock="Right"
                                 Margin="40">
-                        <Label>Введите валютную пару</Label>
+                        <TextBlock TextWrapping="Wrap">Введите валютную пару</TextBlock>
                         <TextBox 
                             Text="{Binding Pair, UpdateSourceTrigger=PropertyChanged}" 
                             Width="auto" />
-                        <Label>Введите количество сделок:</Label>
+                        <TextBlock TextWrapping="Wrap">Введите количество сделок:</TextBlock>
                         <TextBox 
                             Text="{Binding TradesAmount, UpdateSourceTrigger=PropertyChanged}" 
                             Width="auto" />
@@ -72,12 +72,12 @@
                         <TextBox 
                             Text="{Binding Pair, UpdateSourceTrigger=PropertyChanged}" 
                             Width="auto" />
-                        <Label>Выберите длительность свечи</Label>
+                        <TextBlock TextWrapping="Wrap">Выберите длительность свечи</TextBlock>
                         <ComboBox
                             ItemsSource="{Binding TimeFrames}"
                             SelectedItem="{Binding SelectedTimeFrame, UpdateSourceTrigger=PropertyChanged}"/>
                         <StackPanel>
-                            <Label>Выберите параметр для получения свечей</Label>
+                            <TextBlock TextWrapping="Wrap">Выберите параметр для получения свечей</TextBlock>
                             <RadioButton 
                                 GroupName="CandleOption" 
                                 Content="Использовать количество"
@@ -98,7 +98,7 @@
                                 Width="auto" />
                         </StackPanel>
                         <StackPanel Visibility="{Binding TimeTextBoxesVisibility}">
-                            <Label>Введите временной промежуток для отображения свечей</Label>
+                            <TextBlock TextWrapping="Wrap">Введите временной промежуток для отображения свечей</TextBlock>
                             <TextBox Text="{Binding SelectedTimeFrom}"></TextBox>
                             <TextBox Text="{Binding SelectedTimeTo}"></TextBox>
                         </StackPanel>
@@ -120,12 +120,12 @@
                         <TextBox 
                             Text="{Binding Pair, UpdateSourceTrigger=PropertyChanged}" 
                             Width="auto" />
-                        <Label>Введите максимальное количество сделок:</Label>
+                        <TextBlock TextWrapping="Wrap">Введите максимальное количество сделок:</TextBlock>
                         <TextBox 
                             Text="{Binding TradesAmount, UpdateSourceTrigger=PropertyChanged}" 
                             Width="auto" />
                         <Button Click="GetSocketTradesButton_OnClick" Width="auto" Margin="0 16 0 0 ">Подключиться</Button>
-                        <Label Content="{Binding TradesConnectInfo}"></Label>
+                        <TextBlock TextWrapping="Wrap" Text="{Binding TradesConnectInfo}"></TextBlock>
                     </StackPanel>
                 </DockPanel>
             </TabItem>
@@ -139,7 +139,7 @@
                     </DataGrid>
                     <StackPanel DockPanel.Dock="Right"
                                 Margin="40">
-                        <Label>Введите валютную пару</Label>
+                        <TextBlock TextWrapping="Wrap">Введите валютную пару</TextBlock>
                         <TextBox 
                             Text="{Binding Pair, UpdateSourceTrigger=PropertyChanged}" 
                             Width="auto" />
@@ -147,12 +147,32 @@
                         <ComboBox
                             ItemsSource="{Binding TimeFrames}"
                             SelectedItem="{Binding SelectedTimeFrame, UpdateSourceTrigger=PropertyChanged}"/>
-                        <Label>Введите максимальное количество сделок:</Label>
+                        <TextBlock TextWrapping="Wrap">Введите максимальное количество свечей:</TextBlock>
                         <TextBox 
                             Text="{Binding CandlesAmount, UpdateSourceTrigger=PropertyChanged}" 
                             Width="auto" />
                         <Button Click="GetSocketCandlesButton_OnClick" Width="auto" Margin="0 16 0 0 ">Подключиться</Button>
-                        <Label Content="{Binding CandlesConnectInfo}"></Label>
+                        <TextBlock Text="{Binding CandlesConnectInfo}" TextWrapping="Wrap"></TextBlock>
+                    </StackPanel>
+                </DockPanel>
+            </TabItem>
+            <TabItem Header="Portfolio">
+                <DockPanel>
+                    <DataGrid x:Name="PortfolioGrid" 
+                              ItemsSource="{Binding Portfolios}"
+                              IsReadOnly="True"
+                              Width="auto"
+                              DockPanel.Dock="Left"
+                              FontSize="20">
+                    </DataGrid>
+                    <StackPanel DockPanel.Dock="Right"
+                                Margin="40">
+                        <TextBlock TextWrapping="Wrap">Ваш портфель составляет: 1 BTC, 15000 XRP, 50 XMR, 30 DASH</TextBlock>
+                        <Button Click="GetPortfoliosButton_OnClick"
+                                Width="auto" 
+                                Margin="0 16 0 0 ">
+                            Рассчитать в данных валютах
+                        </Button>
                     </StackPanel>
                 </DockPanel>
             </TabItem>

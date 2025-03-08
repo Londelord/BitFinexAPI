@@ -1,5 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Security.Cryptography;
 using System.Windows;
 using TestTask.API;
 using TestTask.API.TestHQ;
@@ -11,6 +12,7 @@ public class MainViewModel : INotifyPropertyChanged
     private Visibility _candlesAmountTextBoxVisibility = Visibility.Visible;
     private Visibility _timeTextBoxesVisibility = Visibility.Collapsed;
     private readonly Connector _connector = new Connector();
+    
     private string LastPair { get; set; } = string.Empty;
     
     private string _tradesConnectInfo = string.Empty;
@@ -64,6 +66,7 @@ public class MainViewModel : INotifyPropertyChanged
     public ObservableCollection<Trade> SocketTrades { get; set; }
     public ObservableCollection<Candle> SocketCandles { get; set; }
     public ObservableCollection<string> TimeFrames { get; set; }
+    public ObservableCollection<Portfolio> Portfolios { get; set; }
     public string SelectedTimeFrame { get; set; }
 
     private string _selectedTimeFrom = "";
@@ -133,6 +136,7 @@ public class MainViewModel : INotifyPropertyChanged
         Candles = [];
         SocketTrades = [];
         SocketCandles = [];
+        Portfolios = [];
 
         SelectedTimeFrom = DateTimeOffset.UtcNow.AddMinutes(-30).ToString();
         SelectedTimeTo = DateTimeOffset.UtcNow.ToString();
@@ -268,5 +272,32 @@ public class MainViewModel : INotifyPropertyChanged
             if (SocketCandles.Count > CandlesAmount)
                 SocketCandles.RemoveAt(0);
         });
+    }
+
+    public async Task LoadPortfoliosAsync()
+    {
+        var pairs = new string[] { "btcusd", "xrpusd", "xmrusd", "dshusd"};
+        var result = await _connector.GetLastPricesOfPairsAsync(pairs);
+
+        var btc = 1f;
+        var xpr = 15000f;
+        var xmr = 50f;
+        var dsh = 30f;
+        
+        var sum = result[0] * btc + result[1] * xpr + result[2] * xmr + result[3] * dsh;
+
+        var portfolios = pairs.Select((t, i) => new Portfolio
+            {
+                Amount = sum / result[i],
+                Currency = t[..3]
+            })
+            .ToList();
+
+        Console.WriteLine(sum);
+
+        foreach (var portfolio in portfolios)
+        {
+            Portfolios.Add(portfolio);
+        }
     }
 }

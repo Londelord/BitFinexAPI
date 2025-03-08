@@ -54,4 +54,10 @@ public partial class MainWindow : Window
         var viewModel = (MainViewModel)DataContext;
         viewModel.LoadSocketCandlesAsync();
     }
+
+    private async void GetPortfoliosButton_OnClick(object sender, RoutedEventArgs e)
+    {
+        var viewModel = (MainViewModel)DataContext;
+        await viewModel.LoadPortfoliosAsync();
+    }
 }
