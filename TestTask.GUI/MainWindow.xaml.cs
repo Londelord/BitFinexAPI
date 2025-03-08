@@ -46,12 +46,12 @@ public partial class MainWindow : Window
     private void GetSocketTradesButton_OnClick(object sender, RoutedEventArgs e)
     {
         var viewModel = (MainViewModel)DataContext;
-        Task.Run(async () => await viewModel.LoadSocketTradesAsync());
+        viewModel.LoadSocketTradesAsync();
     }
 
     private void GetSocketCandlesButton_OnClick(object sender, RoutedEventArgs e)
     {
         var viewModel = (MainViewModel)DataContext;
-        Task.Run(async () => await viewModel.LoadSocketCandlesAsync());
+        viewModel.LoadSocketCandlesAsync();
     }
 }

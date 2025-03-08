@@ -11,7 +11,32 @@ public class MainViewModel : INotifyPropertyChanged
     private Visibility _candlesAmountTextBoxVisibility = Visibility.Visible;
     private Visibility _timeTextBoxesVisibility = Visibility.Collapsed;
     private readonly Connector _connector = new Connector();
+    private string LastPair { get; set; } = string.Empty;
+    
+    private string _tradesConnectInfo = string.Empty;
 
+    public string TradesConnectInfo
+    {
+        get => _tradesConnectInfo;
+        set
+        {
+            _tradesConnectInfo = value;
+            OnPropertyChanged(nameof(TradesConnectInfo));
+        }
+    }
+
+    private string _candlesConnectInfo = string.Empty;
+
+    public string CandlesConnectInfo
+    {
+        get => _candlesConnectInfo;
+        set
+        {
+            _candlesConnectInfo = value;
+            OnPropertyChanged(nameof(CandlesConnectInfo));
+        }
+    }
+    
     public Visibility CandlesAmountTextBoxVisibility
     {
         get => _candlesAmountTextBoxVisibility;
@@ -143,18 +168,44 @@ public class MainViewModel : INotifyPropertyChanged
         }
     }
 
-    public async Task LoadSocketTradesAsync()
+    public void LoadSocketTradesAsync()
     {
-        await Task.Run(async () =>
-        {
-            await _connector.ConnectAsync();
-
-            _connector.NewBuyTrade += AddTradeToCollection;
-            _connector.NewSellTrade += AddTradeToCollection;
-            
-            _connector.SubscribeTrades(Pair, TradesAmount);
-        });
+        TradesConnectInfo = "Connecting to socket trades...";
+        UnsubscribeTrades();
+        _connector.NewBuyTrade += AddTradeToCollection;
+        _connector.NewSellTrade += AddTradeToCollection;
         
+        Task.Run(() =>
+        {
+            try
+            {
+                _connector.SubscribeTrades(Pair, TradesAmount);
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    TradesConnectInfo = "Connection successful. Please wait for new trades to appear.";
+                });
+                
+            }
+            catch (Exception ex)
+            {
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    TradesConnectInfo = "Connection failed. Please try again.";
+                });
+                Console.WriteLine(ex.Message);
+            }
+            
+            return Task.CompletedTask;
+        });
+    }
+
+    private void UnsubscribeTrades()
+    {
+        _connector.UnsubscribeTrades(LastPair);
+        LastPair = Pair;
+        SocketTrades.Clear();
+        _connector.NewBuyTrade -= AddTradeToCollection;
+        _connector.NewSellTrade -= AddTradeToCollection;
     }
 
     private void AddTradeToCollection(Trade trade)
@@ -171,16 +222,41 @@ public class MainViewModel : INotifyPropertyChanged
         });
     }
 
-    public async Task LoadSocketCandlesAsync()
+    public void LoadSocketCandlesAsync()
     {
-        await Task.Run(async () =>
+        CandlesConnectInfo = "Connecting to socket candles...";
+        UnsubscribeCandles();
+        
+        _connector.CandleSeriesProcessing += AddCandleToCollection;
+        Task.Run(() =>
         {
-            await _connector.ConnectAsync();
-
-            _connector.CandleSeriesProcessing += AddCandleToCollection;
-
-            _connector.SubscribeCandles(Pair, TimeFrame.GetTimeFrameInInt(SelectedTimeFrame));
+            try
+            {
+                _connector.SubscribeCandles(Pair, TradesAmount);
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    CandlesConnectInfo = "Connection successful. Please wait for new candles to appear";
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    CandlesConnectInfo = "Connection failed. Please try again.";
+                });
+            }
+            
+            return Task.CompletedTask;
         });
+    }
+    
+    private void UnsubscribeCandles()
+    {
+        _connector.UnsubscribeCandles(LastPair);
+        LastPair = Pair;
+        SocketCandles.Clear();
+        _connector.CandleSeriesProcessing -= AddCandleToCollection;
     }
     
     private void AddCandleToCollection(Candle candle)
@@ -188,12 +264,6 @@ public class MainViewModel : INotifyPropertyChanged
         Application.Current.Dispatcher.Invoke(() =>
         {
             SocketCandles.Add(candle);
-
-            if (SocketCandles.Any(c => c.OpenTime.Equals(candle.OpenTime)))
-            {
-                SocketCandles.Remove(SocketCandles.FirstOrDefault(c => c.OpenTime.Equals(candle.OpenTime)));
-                SocketCandles.Add(candle);
-            }
 
             if (SocketCandles.Count > CandlesAmount)
                 SocketCandles.RemoveAt(0);

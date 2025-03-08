@@ -125,6 +125,7 @@
                             Text="{Binding TradesAmount, UpdateSourceTrigger=PropertyChanged}" 
                             Width="auto" />
                         <Button Click="GetSocketTradesButton_OnClick" Width="auto" Margin="0 16 0 0 ">Подключиться</Button>
+                        <Label Content="{Binding TradesConnectInfo}"></Label>
                     </StackPanel>
                 </DockPanel>
             </TabItem>
@@ -151,6 +152,7 @@
                             Text="{Binding CandlesAmount, UpdateSourceTrigger=PropertyChanged}" 
                             Width="auto" />
                         <Button Click="GetSocketCandlesButton_OnClick" Width="auto" Margin="0 16 0 0 ">Подключиться</Button>
+                        <Label Content="{Binding CandlesConnectInfo}"></Label>
                     </StackPanel>
                 </DockPanel>
             </TabItem>

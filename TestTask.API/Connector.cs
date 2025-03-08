@@ -9,19 +9,17 @@ namespace TestTask.API;
 
 public class Connector : ITestConnector
 {
-    private readonly HttpClient _httpClient = new ()
+    private readonly HttpClient _httpClient = new HttpClient
     {
         BaseAddress = new Uri("https://api-pub.bitfinex.com/v2/")
     };
-    
-    private readonly ClientWebSocket _clientWebSocket = new();
-    private readonly Dictionary<string, Action<string, int>> _tradeHandlers = new();
-    private readonly Dictionary<string, Action<string, int, DateTimeOffset?, DateTimeOffset?, long?>> _candleHandlers = new();
 
-    public async Task ConnectAsync()
-    { 
-        await _clientWebSocket.ConnectAsync(new Uri("wss://api-pub.bitfinex.com/ws/2"), CancellationToken.None);
-    }
+    private readonly string _wsPath = "wss://api-pub.bitfinex.com/ws/2";
+    
+    private readonly Dictionary<string, WebSocketSubscription> _tradeHandlers =
+        new Dictionary<string, WebSocketSubscription>();
+    private readonly Dictionary<string, WebSocketSubscription> _candleHandlers =
+        new Dictionary<string, WebSocketSubscription>();
     
     public async Task<IEnumerable<Trade>> GetNewTradesAsync(string pair, int maxCount)
     {
@@ -109,171 +107,135 @@ public class Connector : ITestConnector
 
     public event Action<Trade>? NewBuyTrade;
     public event Action<Trade>? NewSellTrade;
-
-    private void HandleTrade(string pair, int maxCount = 100)
-    {
-        string message = JsonSerializer.Serialize(new
-        {
-            @event = "subscribe",
-            channel = "trades",
-            symbol = $"t{pair.ToUpper()}"
-        });
-
-        byte[] buffer = Encoding.UTF8.GetBytes(message);
-        _clientWebSocket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
-
-        var resultBuffer = new ArraySegment<byte>(new byte[2048]);
-        int countOfInfoMessages = 3;
-        int numberOfCurrentMessage = 0;
-            
-        while (_clientWebSocket.State == WebSocketState.Open)
-        {
-            var result = _clientWebSocket.ReceiveAsync(resultBuffer, CancellationToken.None);
-            if (result.Result.MessageType == WebSocketMessageType.Close) break;
-
-            if (numberOfCurrentMessage < countOfInfoMessages)
-            {
-                numberOfCurrentMessage++;
-                continue;
-            }
-            
-            string response = Encoding.UTF8.GetString(resultBuffer.Array, 0, result.Result.Count);
-            
-            var data = JsonSerializer.Deserialize<object[]>(response);
-            
-            if (data.Length < 3)
-                continue;
-
-            var trade = new Trade
-            {
-                Pair = pair.ToUpper(),
-                Id = Convert.ToString(((JsonElement)data[2])[0]),
-                Time = DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(((JsonElement)data[2])[1].ToString())),
-                Amount = Math.Abs(Convert.ToDecimal(float.Parse(((JsonElement)data[2])[2].ToString()))),
-                Price = Math.Abs(Convert.ToDecimal(((JsonElement)data[2])[3].ToString())),
-                Side = Convert.ToDecimal(float.Parse(((JsonElement)data[2])[2].ToString())) > 0 ? "buy" : "sell"
-            };
-            
-            Console.WriteLine(trade.Id);
-
-            if (trade.Side == "buy")
-                OnNewBuyTrade(trade);
-            else
-                OnNewSellTrade(trade);
-        }
-    }
     
     public void SubscribeTrades(string pair, int maxCount = 100)
     {
+        pair = pair.ToUpper();
         if (_tradeHandlers.ContainsKey(pair))
             return;
 
-        HandleTrade(pair, maxCount);
-        _tradeHandlers.Add(pair, HandleTrade);
+        var subscription = new WebSocketSubscription(response => HandleTrade(pair, response));
+        
+        _tradeHandlers[pair] = subscription;
+        subscription.ConnectAsync(_wsPath).Wait();
+        subscription.SubscribeAsync(JsonSerializer.Serialize(new
+        {
+            @event = "subscribe",
+            channel = "trades",
+            symbol = $"t{pair}"
+        })).Wait();
     }
-
+    
     public void UnsubscribeTrades(string pair)
     {
+        pair = pair.ToUpper();
+        if (!_tradeHandlers.TryGetValue(pair, out var handler))
+            return;
+
+        handler.Dispose();
         _tradeHandlers.Remove(pair);
+    }
+    
+    private void HandleTrade(string pair, string response)
+    {
+        object[]? data;
+        try
+        {
+            data = JsonSerializer.Deserialize<object[]>(response);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            return;
+        }
+            
+        if (data.Length < 3)
+            return;
+
+        if (data == null)
+            return;
+
+        var trade = new Trade
+        {
+            Pair = pair.ToUpper(),
+            Id = Convert.ToString(((JsonElement)data[2])[0]) ?? string.Empty,
+            Time = DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(((JsonElement)data[2])[1].ToString())),
+            Amount = Math.Abs(Convert.ToDecimal(float.Parse(((JsonElement)data[2])[2].ToString()))),
+            Price = Math.Abs(Convert.ToDecimal(((JsonElement)data[2])[3].ToString())),
+            Side = Convert.ToDecimal(float.Parse(((JsonElement)data[2])[2].ToString())) > 0 ? "buy" : "sell"
+        };
+
+        if (trade.Side == "buy")
+            NewBuyTrade?.Invoke(trade);
+        else
+            NewSellTrade?.Invoke(trade);
     }
 
     public event Action<Candle>? CandleSeriesProcessing;
     public void SubscribeCandles(string pair, int periodInSec, DateTimeOffset? from = null, DateTimeOffset? to = null, long? count = 0)
     {
+        pair = pair.ToUpper();
         if (_candleHandlers.ContainsKey(pair))
             return;
 
-        HandleCandle(pair, periodInSec, from, to, count);
-        _candleHandlers.Add(pair, HandleCandle);
-    }
-
-    private void HandleCandle(string pair, int periodInSec, DateTimeOffset? from, DateTimeOffset? to, long? count)
-    {
-        if (from is null && to is null && count is null)
-            throw new ArgumentException("Count or from and to must be set");
-
-        string periodInString = TimeFrame.GetTimeFrameInString(periodInSec);
-
-        string message = JsonSerializer.Serialize(new
+        var subscription = new WebSocketSubscription(response => HandleCandle(pair, response));
+        
+        _candleHandlers[pair] = subscription;
+        
+        subscription.ConnectAsync(_wsPath).Wait(); 
+        subscription.SubscribeAsync(JsonSerializer.Serialize(new
         {
             @event = "subscribe",
             channel = "candles",
-            key = $"trade:{periodInString}:t{pair.ToUpper()}"
-        });
-
-        byte[] buffer = Encoding.UTF8.GetBytes(message);
-        _clientWebSocket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
-
-        var resultBuffer = new ArraySegment<byte>(new byte[1024]);
-        int countOfInfoMessages = 2;
-        int numberOfCurrentMessage = 0;
-
-        while (_clientWebSocket.State == WebSocketState.Open)
-        {
-            var result = _clientWebSocket.ReceiveAsync(resultBuffer, CancellationToken.None);
-            if (result.Result.MessageType == WebSocketMessageType.Close) break;
-
-            if (numberOfCurrentMessage < countOfInfoMessages)
-            {
-                numberOfCurrentMessage++;
-                continue;
-            }
-
-            var response = Encoding.UTF8.GetString(resultBuffer.Array, 0, result.Result.Count);
-            object[] data;
-            
-            try
-            {
-                data = JsonSerializer.Deserialize<object[]>(response);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-                continue;
-            }
-
-            try
-            {
-                var candle = new Candle
-                {
-                    Pair = pair,
-                    OpenTime = DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(((JsonElement)data[1])[0].ToString())),
-                    OpenPrice = Convert.ToDecimal(((JsonElement)data[1])[1].ToString()),
-                    ClosePrice = Convert.ToDecimal(((JsonElement)data[1])[2].ToString()),
-                    HighPrice = Convert.ToDecimal(((JsonElement)data[1])[3].ToString()),
-                    LowPrice = Convert.ToDecimal(((JsonElement)data[1])[4].ToString()),
-                    TotalVolume = Convert.ToDecimal(float.Parse(((JsonElement)data[1])[5].ToString())),
-                    TotalPrice = 0
-                };
-
-                candle.TotalPrice = candle.TotalVolume * candle.ClosePrice;
-
-                OnNewCandle(candle);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-            }
-        }
-    }
-
-    public void UnsubscribeCandles(string pair)
-    {
-        _candleHandlers.Remove(pair);
+            key = $"trade:{TimeFrame.GetTimeFrameInString(periodInSec)}:t{pair}"
+        })).Wait();
     }
     
-    private void OnNewBuyTrade(Trade trade)
+    public void UnsubscribeCandles(string pair)
     {
-        NewBuyTrade?.Invoke(trade);
+        pair = pair.ToUpper();
+        if (!_candleHandlers.TryGetValue(pair, out var handler))
+            return;
+
+        handler.Dispose();
+        _candleHandlers.Remove(pair);
     }
 
-    private void OnNewSellTrade(Trade trade)
+    private void HandleCandle(string pair, string response)
     {
-        NewSellTrade?.Invoke(trade);
-    }
+        object[]? data;
+        try
+        {
+            data = JsonSerializer.Deserialize<object[]>(response);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            return;
+        }
+        
+        try
+        {
+            var candle = new Candle
+            {
+                Pair = pair,
+                OpenTime = DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(((JsonElement)data[1])[0].ToString())),
+                OpenPrice = Convert.ToDecimal(((JsonElement)data[1])[1].ToString()),
+                ClosePrice = Convert.ToDecimal(((JsonElement)data[1])[2].ToString()),
+                HighPrice = Convert.ToDecimal(((JsonElement)data[1])[3].ToString()),
+                LowPrice = Convert.ToDecimal(((JsonElement)data[1])[4].ToString()),
+                TotalVolume = Convert.ToDecimal(float.Parse(((JsonElement)data[1])[5].ToString())),
+                TotalPrice = 0
+            };
 
-    private void OnNewCandle(Candle candle)
-    {
-        CandleSeriesProcessing?.Invoke(candle);
+            candle.TotalPrice = candle.TotalVolume * candle.ClosePrice;
+            Console.WriteLine(candle.OpenTime);
+
+            CandleSeriesProcessing?.Invoke(candle);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e.Message);
+        }
     }
 }
